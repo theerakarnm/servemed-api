@@ -1,5 +1,5 @@
-import { db } from "@workspace/db";
-import { brands, categories, productCategories, productImages, products, productVariants } from "@workspace/db/src/schema";
+import { db } from "../db";
+import { brands, categories, productCategories, productImages, products, productVariants } from "../db/schema";
 import { sql } from "drizzle-orm";
 
 export async function getFeaturedBrands(limit = 6) {

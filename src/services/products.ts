@@ -1,5 +1,5 @@
-import { db } from "@workspace/db";
-import { answers, brands, categories, productCategories, productImages, products, productVariants, questions, reviewImages, reviews, supplementFacts, user } from "@workspace/db/src/schema";
+import { db } from "../db";
+import { answers, brands, categories, productCategories, productImages, products, productVariants, questions, reviewImages, reviews, supplementFacts, user } from "../db/schema";
 import { and, asc, count, desc, eq, gte, lte, or, SQL, sql } from "drizzle-orm";
 
 export async function getProducts({
