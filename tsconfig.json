@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "hono/jsx",
+		"outDir": "./dist", // Specify your output directory here
+		"rootDir": "./src", // Optional: specify the root directory of your source files
+
+    "composite": true,
+
+    "paths": {
+      "@workspace/types": ["../../packages/types/src"],
+      "@workspace/db": ["../../packages/db/src"],
+    }
+  },
+  "references": [
+    { "path": "../../packages/db" },
+    { "path": "../../packages/types" }
+  ],
+  "extends": "../../tsconfig.base.json",
+	"include": ["src/**/*.ts"], // Specify the folder to include for compilation
+	"exclude": ["node_modules"]
+}
