@@ -17,6 +17,7 @@ export interface DigitalOceanSpaceConfig {
   region: string;
   endpoint: string;
   bucket: string;
+  rootPath?: string;
 }
 
 export class DigitalOceanSpaceService {
@@ -25,6 +26,15 @@ export class DigitalOceanSpaceService {
 
   constructor(config: DigitalOceanSpaceConfig) {
     this.bucket = config.bucket;
+    console.log({
+      region: config.region,
+      endpoint: config.endpoint,
+      credentials: {
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
+      },
+    });
+
     this.client = new S3Client({
       region: config.region,
       endpoint: config.endpoint,
@@ -45,8 +55,15 @@ export class DigitalOceanSpaceService {
     isPublic = false
   ): Promise<string> {
     try {
-      const command = new PutObjectCommand({
+      console.log({
         Bucket: this.bucket,
+        Key: key,
+        ContentType: contentType,
+        ACL: isPublic ? "public-read" : "private",
+      });
+
+      const command = new PutObjectCommand({
+        Bucket: 'servem3d',
         Key: key,
         Body: body,
         ContentType: contentType,
@@ -54,7 +71,7 @@ export class DigitalOceanSpaceService {
       });
 
       await this.client.send(command);
-      return `https://${this.bucket}.${this.client.config.endpoint?.toString()?.split("https://")[1]}/${key}`;
+      return `${process.env.DO_OBJECT_STORAGE_CDN_URL}/${key}`;
     } catch (error) {
       console.error("Error uploading file:", error);
       throw error;

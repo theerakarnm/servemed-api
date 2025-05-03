@@ -50,7 +50,7 @@ const spaceConfig: DigitalOceanSpaceConfig = {
   secretAccessKey: process.env.DO_OBJECT_STORAGE_SECRET_KEY!,
   region: process.env.DO_OBJECT_STORAGE_REGION || "SGP1",
   endpoint: process.env.DO_OBJECT_STORAGE_ENDPOINT!,
-  bucket: process.env.DO_OBJECT_STORAGE_ROOT_PATH!,
+  bucket: process.env.DO_OBJECT_STORAGE_BUCKET!,
 };
 
 const spaceService = new DigitalOceanSpaceService(spaceConfig);
@@ -65,7 +65,11 @@ const uploadToSpaces = async (
   const fileExtension = originalFilename.split(".").pop() || "";
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const filename = `${timestamp}-${uuidv7()}.${fileExtension}`;
-  const key = `uploads/${filename}`;
+  const key = `qas/${filename}`;
+
+  console.log(key,
+    mimetype,);
+
 
   try {
     const url = await spaceService.uploadFile(
