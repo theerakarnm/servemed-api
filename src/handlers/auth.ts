@@ -50,9 +50,8 @@ handler.use("*", async (c, next) => {
 //   return c.json(Object.keys(configuredProviders));
 // });
 
-handler.on(["POST", "GET"], "/*", (c) => {
-  return auth.handler(c.req.raw);
-});
+handler.on(["POST", "GET"], "/*", (c) => auth.handler(c.req.raw));
+handler.on(["POST", "GET"], "/**", (c) => auth.handler(c.req.raw));
 
 // handler.get("/session", async (c) => {
 //   const session = c.get("session")

@@ -1,5 +1,4 @@
 FROM oven/bun:1.2-slim AS base
-
 FROM base AS builder
 
 RUN cat /etc/os-release
@@ -7,14 +6,13 @@ RUN cat /etc/os-release
 RUN apt-get update && apt-get install -y libc6
 WORKDIR /app
 
-COPY apps/api/package.json .
-# COPY bun.lock .
-COPY apps/api/dist ./dist
-# COPY assets ./assets
+COPY bun.lock package.json tsconfig.json ./
+COPY src ./src
+
+RUN bun add -d typescript
 
 RUN bun install
-
-RUN bunx turbo run build --filter=web-app
+RUN bun run tsc
 
 FROM base AS production
 

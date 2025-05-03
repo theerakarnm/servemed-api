@@ -6,11 +6,13 @@
     "dev": "bun run --hot src/server.ts",
     "build": "bunx tsc -b",
     "clean": "bunx tsc --build --clean",
-    "migrate": "bunx drizzle-kit push"
+    "migrate": "drizzle-kit migrate",
+    "generate": "drizzle-kit generate"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "^22.13.9",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.15.2",
     "drizzle-kit": "^0.30.5"
   },
   "peerDependencies": {
@@ -24,6 +26,7 @@
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.40.0",
     "hono": "^4.7.4",
+    "multer": "^1.4.5-lts.2",
     "pg": "^8.13.3",
     "uuidv7": "^1.0.2",
     "zod": "^3.24.2"
