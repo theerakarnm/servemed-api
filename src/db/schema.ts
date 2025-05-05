@@ -1,7 +1,34 @@
-import { pgTable, foreignKey, serial, integer, varchar, boolean, timestamp, date, unique, text, index, numeric } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, serial, integer, varchar, boolean, timestamp, date, unique, text, index, numeric, pgEnum, decimal, jsonb, uniqueIndex } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
+// --- Enums ---
 
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending", // Order created, awaiting payment or processing
+  "processing", // Payment received, order being prepared
+  "shipped", // Order handed over to carrier
+  "delivered", // Order successfully delivered
+  "cancelled", // Order cancelled by user or admin
+  "refunded", // Order refunded
+  "failed", // Order failed (e.g., payment failure)
+]);
+
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending", // Payment initiated but not confirmed
+  "successful", // Payment completed successfully
+  "failed", // Payment attempt failed
+  "refunded", // Payment was refunded
+]);
+
+export const shipmentStatusEnum = pgEnum("shipment_status", [
+  "pending", // Shipment not yet processed
+  "preparing", // Shipment being prepared
+  "shipped", // Handed over to carrier
+  "in_transit", // With the carrier, on its way
+  "delivered", // Successfully delivered
+  "failed", // Delivery attempt failed
+  "cancelled", // Shipment cancelled
+]);
 
 export const productImages = pgTable("product_images", {
   imageId: serial("image_id").primaryKey().notNull(),
@@ -415,3 +442,175 @@ export const products = pgTable("products", {
     name: "products_brand_id_brands_brand_id_fk"
   }),
 ]);
+
+// Addresses Table
+export const addresses = pgTable(
+  "addresses",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").references(() => user.id, {
+      onDelete: "cascade", // Or 'set null' depending on your requirements
+    }), // Optional: Link address to a user account
+    streetLine1: varchar("street_line_1", { length: 255 }).notNull(),
+    streetLine2: varchar("street_line_2", { length: 255 }),
+    city: varchar("city", { length: 100 }).notNull(),
+    stateOrProvince: varchar("state_or_province", { length: 100 }).notNull(),
+    postalCode: varchar("postal_code", { length: 20 }).notNull(),
+    country: varchar("country", { length: 50 }).notNull(), // Consider using ISO country codes
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => {
+    return {
+      userIdx: index("addr_user_idx").on(table.userId),
+    };
+  },
+);
+
+// Orders Table
+export const orders = pgTable(
+  "orders",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "restrict" }), // Don't delete user if they have orders
+    status: orderStatusEnum("status").default("pending").notNull(),
+    totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(), // Total including shipping, taxes etc.
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"), // ISO 4217 currency code
+    shippingAddressId: integer("shipping_address_id")
+      .notNull()
+      .references(() => addresses.id, { onDelete: "restrict" }), // Don't delete address if used in order
+    billingAddressId: integer("billing_address_id").references(
+      () => addresses.id,
+      { onDelete: "restrict" },
+    ), // Optional: Can be same as shipping
+    // paymentId: integer('payment_id'), // We'll link from the payment table instead for flexibility
+    // shipmentId: integer('shipment_id'), // We'll link from the shipment table
+    notes: text("notes"), // Customer notes
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => {
+    return {
+      userIdx: index("order_user_idx").on(table.userId),
+      statusIdx: index("order_status_idx").on(table.status),
+      shippingAddrIdx: index("order_shipping_addr_idx").on(
+        table.shippingAddressId,
+      ),
+      billingAddrIdx: index("order_billing_addr_idx").on(
+        table.billingAddressId,
+      ),
+    };
+  },
+);
+
+// Order Items Table (Line items for an order)
+export const orderItems = pgTable(
+  "order_items",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }), // Delete items if order is deleted
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.productId, { onDelete: "restrict" }), // Don't delete product if it's in an order
+    quantity: integer("quantity").notNull(),
+    // IMPORTANT: Store price at the time of purchase, as product price might change later
+    priceAtPurchase: decimal("price_at_purchase", {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"), // Should match order currency
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => {
+    return {
+      orderIdx: index("item_order_idx").on(table.orderId),
+      productIdx: index("item_product_idx").on(table.productId),
+      orderProductUnique: uniqueIndex("order_product_unique_idx").on(
+        table.orderId,
+        table.productId,
+      ), // Usually only one line item per product per order
+    };
+  },
+);
+
+// Payments Table
+export const payments = pgTable(
+  "payments",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }), // Link payment to order
+    status: paymentStatusEnum("status").default("pending").notNull(),
+    method: varchar("method", { length: 50 }), // e.g., 'stripe', 'paypal', 'credit_card'
+    transactionId: varchar("transaction_id", { length: 255 }).unique(), // ID from payment provider
+    amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    providerDetails: jsonb("provider_details"), // Store raw response or specific details from provider
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => {
+    return {
+      orderIdx: index("payment_order_idx").on(table.orderId),
+      statusIdx: index("payment_status_idx").on(table.status),
+      transactionIdx: index("payment_transaction_idx").on(table.transactionId),
+    };
+  },
+);
+
+// Shipments Table (Optional, but recommended for tracking)
+export const shipments = pgTable(
+  "shipments",
+  {
+    id: serial("id").primaryKey(),
+    orderId: integer("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    status: shipmentStatusEnum("status").default("pending").notNull(),
+    carrier: varchar("carrier", { length: 100 }), // e.g., 'UPS', 'FedEx', 'DHL'
+    trackingNumber: varchar("tracking_number", { length: 255 }),
+    shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }),
+    currency: varchar("currency", { length: 3 }).default("USD"),
+    estimatedDeliveryDate: timestamp("estimated_delivery_date", {
+      withTimezone: true,
+    }),
+    actualDeliveryDate: timestamp("actual_delivery_date", {
+      withTimezone: true,
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => {
+    return {
+      orderIdx: index("shipment_order_idx").on(table.orderId),
+      statusIdx: index("shipment_status_idx").on(table.status),
+      trackingIdx: index("shipment_tracking_idx").on(table.trackingNumber),
+    };
+  },
+);
