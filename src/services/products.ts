@@ -1,4 +1,5 @@
 import { db } from "../db";
+import { nutritionFacts } from "../db/drizzle/schema";
 import { answers, brands, categories, productCategories, productImages, products, productVariants, questions, reviewImages, reviews, supplementFacts, user } from "../db/schema";
 import { and, asc, count, desc, eq, gte, lte, or, SQL, sql } from "drizzle-orm";
 
@@ -171,6 +172,7 @@ export async function getProductDetail(productId: number) {
         nonGmoDocumentation: products.nonGmoDocumentation,
         massSpecLabTested: products.massSpecLabTested,
         dateFirstAvailable: products.dateFirstAvailable,
+        // aller
       })
       .from(products)
       .leftJoin(brands, eq(products.brandId, brands.brandId))
@@ -224,6 +226,19 @@ export async function getProductDetail(productId: number) {
       })
     );
 
+    const nutritionalFacts = await db
+      .select({
+        factId: nutritionFacts.factId,
+        productId: nutritionFacts.productId,
+        ingredient: nutritionFacts.ingredient,
+        amountPerServing: nutritionFacts.amountPerServing,
+        percentDailyValue: nutritionFacts.percentDailyValue,
+        displayOrder: nutritionFacts.displayOrder,
+      })
+      .from(nutritionFacts)
+      .where(eq(nutritionFacts.productId, productId))
+      .orderBy(asc(nutritionFacts.displayOrder));
+
     // Get categories
     const categoryList = await db
       .select({
@@ -242,6 +257,7 @@ export async function getProductDetail(productId: number) {
       images,
       variants: variantsWithFacts,
       categories: categoryList,
+      nutritionalFacts,
     };
   } catch (error) {
     console.error("Error fetching product detail:", error);
