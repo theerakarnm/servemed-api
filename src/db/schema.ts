@@ -425,6 +425,25 @@ export const customersAlsoViewed = pgTable(
   }]),
 );
 
+export const userProductInteractions = pgTable(
+  "user_product_interactions",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.productId, { onDelete: "cascade" }),
+    interactionType: varchar("interaction_type", { length: 50 }).notNull(), // e.g. "view", "purchase"
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("upi_user_idx").on(table.userId),
+    index("upi_product_idx").on(table.productId),
+  ]
+);
+
 // --- Drizzle Relations ---
 // Define relationships for ORM querying (e.g., joins, eager loading)
 
@@ -455,6 +474,7 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   productRankings: many(productRankings),
   questions: many(questions),
   reviews: many(reviews),
+  userProductInteractions: many(userProductInteractions),
   productReviewHighlights: many(productReviewHighlights),
 }));
 
@@ -525,6 +545,7 @@ export const usersRelations = relations(user, ({ many }) => ({
   questions: many(questions),
   answers: many(answers),
   reviews: many(reviews),
+  userProductInteractions: many(userProductInteractions),
 }));
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({
@@ -561,6 +582,20 @@ export const reviewsRelations = relations(reviews, ({ one, many }) => ({
   }),
   reviewImages: many(reviewImages),
 }));
+
+export const userProductInteractionsRelations = relations(
+  userProductInteractions,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [userProductInteractions.userId],
+      references: [user.id],
+    }),
+    product: one(products, {
+      fields: [userProductInteractions.productId],
+      references: [products.productId],
+    }),
+  }),
+);
 
 export const reviewImagesRelations = relations(reviewImages, ({ one }) => ({
   review: one(reviews, {
