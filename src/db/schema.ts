@@ -1,5 +1,17 @@
 import { pgTable, foreignKey, serial, integer, varchar, boolean, timestamp, date, unique, text, index, numeric, pgEnum, decimal, jsonb, uniqueIndex } from "drizzle-orm/pg-core"
-import { sql } from "drizzle-orm"
+import { relations, sql } from "drizzle-orm"
+
+
+const commonFields = {
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(), // Consider $onUpdate trigger or handle in application logic
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+}
+
 
 // --- Enums ---
 
@@ -613,4 +625,241 @@ export const shipments = pgTable(
       trackingIdx: index("shipment_tracking_idx").on(table.trackingNumber),
     };
   },
+);
+
+export const userProductInteractions = pgTable(
+  "user_product_interactions",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => products.productId, { onDelete: "cascade" }),
+    interactionType: varchar("interaction_type", { length: 50 }).notNull(), // e.g. "view", "purchase"
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("upi_user_idx").on(table.userId),
+    index("upi_product_idx").on(table.productId),
+  ]
+);
+
+// --- Drizzle Relations ---
+// Define relationships for ORM querying (e.g., joins, eager loading)
+
+export const brandsRelations = relations(brands, ({ many }) => ({
+  products: many(products),
+}));
+
+export const categoriesRelations = relations(categories, ({ one, many }) => ({
+  parentCategory: one(categories, {
+    fields: [categories.parentCategoryId],
+    references: [categories.categoryId],
+    relationName: "parentCategory",
+  }),
+  childCategories: many(categories, {
+    relationName: "parentCategory",
+  }),
+  productCategories: many(productCategories),
+}));
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  brand: one(brands, {
+    fields: [products.brandId],
+    references: [brands.brandId],
+  }),
+  productCategories: many(productCategories),
+  productVariants: many(productVariants),
+  productImages: many(productImages),
+  productRankings: many(productRankings),
+  questions: many(questions),
+  reviews: many(reviews),
+  userProductInteractions: many(userProductInteractions),
+  productReviewHighlights: many(productReviewHighlights),
+}));
+
+export const productCategoriesRelations = relations(
+  productCategories,
+  ({ one }) => ({
+    product: one(products, {
+      fields: [productCategories.productId],
+      references: [products.productId],
+    }),
+    category: one(categories, {
+      fields: [productCategories.categoryId],
+      references: [categories.categoryId],
+    }),
+  }),
+);
+
+export const productVariantsRelations = relations(
+  productVariants,
+  ({ one, many }) => ({
+    product: one(products, {
+      fields: [productVariants.productId],
+      references: [products.productId],
+    }),
+    supplementFacts: many(supplementFacts),
+    frequentlyBoughtTogetherItems: many(frequentlyBoughtTogetherItems),
+    customersAlsoViewedSource: many(customersAlsoViewed, {
+      relationName: "sourceVariant",
+    }),
+    customersAlsoViewedTarget: many(customersAlsoViewed, {
+      relationName: "viewedVariant",
+    }),
+  }),
+);
+
+export const productImagesRelations = relations(productImages, ({ one }) => ({
+  product: one(products, {
+    fields: [productImages.productId],
+    references: [products.productId],
+  }),
+}));
+
+export const supplementFactsRelations = relations(
+  supplementFacts,
+  ({ one }) => ({
+    productVariant: one(productVariants, {
+      fields: [supplementFacts.variantId],
+      references: [productVariants.variantId],
+    }),
+  }),
+);
+
+export const productRankingsRelations = relations(
+  productRankings,
+  ({ one }) => ({
+    product: one(products, {
+      fields: [productRankings.productId],
+      references: [products.productId],
+    }),
+    category: one(categories, {
+      fields: [productRankings.categoryId],
+      references: [categories.categoryId],
+    }),
+  }),
+);
+
+export const usersRelations = relations(user, ({ many }) => ({
+  questions: many(questions),
+  answers: many(answers),
+  reviews: many(reviews),
+  userProductInteractions: many(userProductInteractions),
+}));
+
+export const questionsRelations = relations(questions, ({ one, many }) => ({
+  product: one(products, {
+    fields: [questions.productId],
+    references: [products.productId],
+  }),
+  user: one(user, {
+    fields: [questions.userId],
+    references: [user.id],
+  }),
+  answers: many(answers),
+}));
+
+export const answersRelations = relations(answers, ({ one }) => ({
+  question: one(questions, {
+    fields: [answers.questionId],
+    references: [questions.questionId],
+  }),
+  user: one(user, {
+    fields: [answers.userId],
+    references: [user.id],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one, many }) => ({
+  product: one(products, {
+    fields: [reviews.productId],
+    references: [products.productId],
+  }),
+  user: one(user, {
+    fields: [reviews.userId],
+    references: [user.id],
+  }),
+  reviewImages: many(reviewImages),
+}));
+
+export const userProductInteractionsRelations = relations(
+  userProductInteractions,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [userProductInteractions.userId],
+      references: [user.id],
+    }),
+    product: one(products, {
+      fields: [userProductInteractions.productId],
+      references: [products.productId],
+    }),
+  }),
+);
+
+export const reviewImagesRelations = relations(reviewImages, ({ one }) => ({
+  review: one(reviews, {
+    fields: [reviewImages.reviewId],
+    references: [reviews.reviewId],
+  }),
+}));
+
+export const reviewHighlightsRelations = relations(
+  reviewHighlights,
+  ({ many }) => ({
+    productReviewHighlights: many(productReviewHighlights),
+  }),
+);
+
+export const productReviewHighlightsRelations = relations(
+  productReviewHighlights,
+  ({ one }) => ({
+    product: one(products, {
+      fields: [productReviewHighlights.productId],
+      references: [products.productId],
+    }),
+    reviewHighlight: one(reviewHighlights, {
+      fields: [productReviewHighlights.highlightId],
+      references: [reviewHighlights.highlightId],
+    }),
+  }),
+);
+
+export const frequentlyBoughtTogetherGroupsRelations = relations(
+  frequentlyBoughtTogetherGroups,
+  ({ many }) => ({
+    items: many(frequentlyBoughtTogetherItems),
+  }),
+);
+
+export const frequentlyBoughtTogetherItemsRelations = relations(
+  frequentlyBoughtTogetherItems,
+  ({ one }) => ({
+    group: one(frequentlyBoughtTogetherGroups, {
+      fields: [frequentlyBoughtTogetherItems.groupId],
+      references: [frequentlyBoughtTogetherGroups.groupId],
+    }),
+    productVariant: one(productVariants, {
+      fields: [frequentlyBoughtTogetherItems.variantId],
+      references: [productVariants.variantId],
+    }),
+  }),
+);
+
+export const customersAlsoViewedRelations = relations(
+  customersAlsoViewed,
+  ({ one }) => ({
+    sourceVariant: one(productVariants, {
+      fields: [customersAlsoViewed.sourceVariantId],
+      references: [productVariants.variantId],
+      relationName: "sourceVariant",
+    }),
+    viewedVariant: one(productVariants, {
+      fields: [customersAlsoViewed.viewedVariantId],
+      references: [productVariants.variantId],
+      relationName: "viewedVariant",
+    }),
+  }),
 );
