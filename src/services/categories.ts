@@ -8,14 +8,14 @@ interface Category {
   parentCategoryId: number | null;
   description: string | null;
   children?: Category[];
-}[]
+}
 
 function buildCategoryTree(allCategories: Category[] = [], parentId: number | null = null): Category[] {
   return allCategories
     .filter((c) => c.parentCategoryId === parentId)
     .map((category) => ({
       ...category,
-      children: buildCategoryTree([], category.categoryId),
+      children: buildCategoryTree(allCategories, category.categoryId),
     }));
 }
 
@@ -114,7 +114,7 @@ export async function getCategoryWithProducts(
         totalItems: Number(countRow),
         currentPage: page,
         pageSize,
-        totalPages: Math.ceil(Number(count) / pageSize),
+        totalPages: Math.ceil(Number(countRow) / pageSize),
       },
     };
   } catch (error) {
