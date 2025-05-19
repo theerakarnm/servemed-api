@@ -42,6 +42,15 @@ export const shipmentStatusEnum = pgEnum("shipment_status", [
   "cancelled", // Shipment cancelled
 ]);
 
+export const checkoutStatusEnum = pgEnum('checkout_status', [
+  'pending',
+  'success',
+  'failed',
+  'cancel',
+  'pending_verify',
+]);
+
+
 export const productImages = pgTable("product_images", {
   imageId: serial("image_id").primaryKey().notNull(),
   productId: integer("product_id").notNull(),
@@ -645,6 +654,15 @@ export const userProductInteractions = pgTable(
     index("upi_product_idx").on(table.productId),
   ]
 );
+
+export const checkouts = pgTable('checkouts', {
+  checkoutId: serial('checkout_id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  status: checkoutStatusEnum('status').default('pending').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
 
 // --- Drizzle Relations ---
 // Define relationships for ORM querying (e.g., joins, eager loading)
