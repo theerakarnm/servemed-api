@@ -235,11 +235,11 @@ export const nutritionFacts = pgTable("nutrition_facts", {
   deletedAt: timestamp("deleted_at", { withTimezone: true, mode: 'string' }),
 }, (table) => [
   index("nutrition_product_idx").using("btree", table.productId.asc().nullsLast().op("int4_ops")),
-  foreignKey({
-    columns: [table.productId],
-    foreignColumns: [products.productId],
-    name: "nutrition_facts_product_id_products_product_id_fk"
-  }).onDelete("cascade"),
+  // foreignKey({
+  //   columns: [table.productId],
+  //   foreignColumns: [products.productId],
+  //   name: "nutrition_facts_product_id_products_product_id_fk"
+  // }).onDelete("cascade"),
 ]);
 
 export const verification = pgTable("verification", {
@@ -469,7 +469,7 @@ export const addresses = pgTable(
   "addresses",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id").references(() => user.id, {
+    userId: text("user_id").references(() => user.id, {
       onDelete: "cascade", // Or 'set null' depending on your requirements
     }), // Optional: Link address to a user account
     streetLine1: varchar("street_line_1", { length: 255 }).notNull(),
@@ -497,7 +497,7 @@ export const orders = pgTable(
   "orders",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }), // Don't delete user if they have orders
     status: orderStatusEnum("status").default("pending").notNull(),
