@@ -497,7 +497,7 @@ export const orders = pgTable(
   "orders",
   {
     id: serial("id").primaryKey(),
-    userId: text("user_id")
+    userId: integer("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }), // Don't delete user if they have orders
     status: orderStatusEnum("status").default("pending").notNull(),
