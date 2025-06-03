@@ -53,4 +53,17 @@ handler.post('/', zValidator('json', z.object({
   }
 });
 
+handler.post('/:configKey', async (c) => {
+  const configKey = c.req.param('configKey');
+  try {
+    const config = await service.configService.getConfiguration(configKey);
+    return c.json({ data: config });
+  } catch (error) {
+    throw new HTTPException(404, { message: `Configuration with key "${configKey}" not found` });
+  }
+})
+
+
+
+
 export default handler;
