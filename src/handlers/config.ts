@@ -21,7 +21,7 @@ const handler = new Hono<{
 //   return next();
 // });
 
-handler.post('/:configId', zValidator('json', z.object({
+handler.post('/', zValidator('json', z.object({
   key: z.string().min(1, 'Key is required'),
   value: z.string().min(1, 'Value is required'),
 })), async (c) => {
