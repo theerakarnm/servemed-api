@@ -664,6 +664,18 @@ export const checkouts = pgTable('checkouts', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const configTable = pgTable("configs", {
+  key: text("key").primaryKey().notNull(),
+  value: jsonb("value").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  createdBy: text("created_by").notNull(),
+  updatedBy: text("updated_by").notNull(),
+}, (table) => [
+  unique("configs_key_unique").on(table.key),
+]);
+
 // --- Drizzle Relations ---
 // Define relationships for ORM querying (e.g., joins, eager loading)
 
