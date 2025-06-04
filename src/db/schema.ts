@@ -510,6 +510,8 @@ export const orders = pgTable(
       () => addresses.id,
       { onDelete: "restrict" },
     ), // Optional: Can be same as shipping
+    shippingAddress: jsonb("shipping_address").notNull(),
+    billingAddress: jsonb("billing_address"),
     // paymentId: integer('payment_id'), // We'll link from the payment table instead for flexibility
     // shipmentId: integer('shipment_id'), // We'll link from the shipment table
     notes: text("notes"), // Customer notes
