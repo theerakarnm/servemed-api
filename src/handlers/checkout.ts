@@ -23,14 +23,20 @@ handler.use('*', async (c, next) => {
 handler.post('/', async (c) => {
   const user = c.get('user');
   const body = await c.req.json<{
-    amount: number;
+    amountObject: {
+      shipping: number;
+      subtotal: number;
+      tax: number;
+      total: number;
+    },
+    paymentMethod: 'thai_qr'
     items: OrderItemInput[];
     userAddressId?: number;
     address?: AddressInput;
     notes?: string;
   }>();
 
-  if (!body.amount) {
+  if (!body.amountObject || !body.amountObject.total) {
     throw new HTTPException(400, { message: 'Amount is required' });
   }
   if (!body.items || body.items.length === 0) {
@@ -48,7 +54,8 @@ handler.post('/', async (c) => {
 
   const order = await service.orderService.createOrder({
     userId: user?.id ?? null,
-    totalAmount: body.amount,
+    totalAmount: body.amountObject.total,
+    paymentMethod: body.paymentMethod,
     shippingAddressId: addressId,
     billingAddressId: addressId,
     notes: body.notes,

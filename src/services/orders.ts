@@ -3,18 +3,28 @@ import { addresses, orders, orderItems } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 export interface AddressInput {
-  streetLine1: string;
-  streetLine2?: string;
-  city: string;
-  stateOrProvince: string;
-  postalCode: string;
-  country: string;
+  isDefault: boolean
+  firstName: string
+  lastName: string
+  address: string
+  city: string
+  state: string
+  postalCode: string
+  country: string
+  phone: string
+  id: string
 }
 
+
 export interface OrderItemInput {
-  productId: number;
-  quantity: number;
-  price: number;
+  productId: number
+  variantId: number
+  name: string
+  brandName: string
+  packageDescription: string
+  price: number
+  quantity: number
+  imageUrl: string
 }
 
 export async function createAddress(userId: string | null, address: AddressInput) {
@@ -22,11 +32,14 @@ export async function createAddress(userId: string | null, address: AddressInput
     .insert(addresses)
     .values({
       userId: userId ?? null,
-      streetLine1: address.streetLine1,
-      streetLine2: address.streetLine2,
+      firstName: address.firstName,
+      lastName: address.lastName,
+      streetLine1: address.address,
+      streetLine2: null,
       city: address.city,
-      stateOrProvince: address.stateOrProvince,
+      stateOrProvince: address.state,
       postalCode: address.postalCode,
+      phone: address.phone,
       country: address.country,
     })
     .returning();
@@ -40,6 +53,7 @@ export async function createOrder(params: {
   billingAddressId?: number;
   notes?: string;
   items: OrderItemInput[];
+  paymentMethod?: 'thai_qr' | 'credit_card' | 'bank_transfer';
 }) {
   const [shipAddr] = await db
     .select()
@@ -58,6 +72,9 @@ export async function createOrder(params: {
     stateOrProvince: shipAddr.stateOrProvince,
     postalCode: shipAddr.postalCode,
     country: shipAddr.country,
+    phone: shipAddr.phone,
+    firstName: shipAddr.firstName,
+    lastName: shipAddr.lastName,
   };
 
   let billingData = shippingData;
@@ -81,6 +98,9 @@ export async function createOrder(params: {
         stateOrProvince: billAddr.stateOrProvince,
         postalCode: billAddr.postalCode,
         country: billAddr.country,
+        phone: billAddr.phone,
+        firstName: billAddr.firstName,
+        lastName: billAddr.lastName,
       };
     }
   }
@@ -88,7 +108,7 @@ export async function createOrder(params: {
   const [order] = await db
     .insert(orders)
     .values({
-      userId: params.userId ? Number(params.userId) : 0,
+      userId: params.userId || `guest-${shipAddr.firstName}-${Date.now()}`,
       totalAmount: params.totalAmount.toString(),
       shippingAddressId: params.shippingAddressId,
       billingAddressId,

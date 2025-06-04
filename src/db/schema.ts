@@ -472,11 +472,14 @@ export const addresses = pgTable(
     userId: text("user_id").references(() => user.id, {
       onDelete: "cascade", // Or 'set null' depending on your requirements
     }), // Optional: Link address to a user account
+    firstName: varchar("first_name", { length: 100 }).notNull(),
+    lastName: varchar("last_name", { length: 100 }).notNull(),
     streetLine1: varchar("street_line_1", { length: 255 }).notNull(),
     streetLine2: varchar("street_line_2", { length: 255 }),
     city: varchar("city", { length: 100 }).notNull(),
     stateOrProvince: varchar("state_or_province", { length: 100 }).notNull(),
     postalCode: varchar("postal_code", { length: 20 }).notNull(),
+    phone: varchar("phone", { length: 20 }), // Optional: Phone number for contact
     country: varchar("country", { length: 50 }).notNull(), // Consider using ISO country codes
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -497,12 +500,16 @@ export const orders = pgTable(
   "orders",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "restrict" }), // Don't delete user if they have orders
     status: orderStatusEnum("status").default("pending").notNull(),
+    shipping: decimal("shipping_amount", { precision: 12, scale: 2 }).default('0').notNull(),
+    subtotal: decimal("subtotal", { precision: 12, scale: 2 }).default('0').notNull(),
+    tax: decimal("tax", { precision: 12, scale: 2 }).default('0').notNull(),
     totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(), // Total including shipping, taxes etc.
-    currency: varchar("currency", { length: 3 }).notNull().default("USD"), // ISO 4217 currency code
+    currency: varchar("currency", { length: 3 }).notNull().default("THB"), // ISO 4217 currency code
+    paymentMethod: varchar("payment_method", { length: 50 }), // e.g., 'credit_card', 'paypal'
     shippingAddressId: integer("shipping_address_id")
       .notNull()
       .references(() => addresses.id, { onDelete: "restrict" }), // Don't delete address if used in order
@@ -674,9 +681,7 @@ export const configTable = pgTable("configs", {
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdBy: text("created_by").notNull(),
   updatedBy: text("updated_by").notNull(),
-}, (table) => [
-  unique("configs_key_unique").on(table.key),
-]);
+});
 
 // --- Drizzle Relations ---
 // Define relationships for ORM querying (e.g., joins, eager loading)
