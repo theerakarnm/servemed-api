@@ -23,6 +23,7 @@ app.route('/v1/products', handlers.productsHandler)
 app.route('/v1/compose', handlers.compose)
 app.route('/v1/images', handlers.images)
 app.route('/v1/recommendations', handlers.recommendationsHandler)
+app.route('/v1/checkout', handlers.checkoutHandler)
 
 export default {
   port: process.env.PORT || 7300,
