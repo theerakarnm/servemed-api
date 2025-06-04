@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { addresses, orders, orderItems } from '../db/schema';
+import { addresses, orders, orderItems, payments } from '../db/schema';
 import { eq } from 'drizzle-orm';
 
 export interface AddressInput {
@@ -144,6 +144,13 @@ export async function createOrder(params: {
       }))
     );
   }
+
+  await db.insert(payments).values({
+    orderId: order.id,
+    amount: order.totalAmount,
+    currency: order.currency,
+    method: order.paymentMethod || params.paymentMethod || 'thai_qr',
+  });
 
   return order;
 }
