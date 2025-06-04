@@ -53,7 +53,7 @@ handler.post('/', zValidator('json', z.object({
   }
 });
 
-handler.post('/:configKey', async (c) => {
+handler.get('/:configKey', async (c) => {
   const configKey = c.req.param('configKey');
   try {
     const config = await service.configService.getConfiguration(configKey);
