@@ -54,6 +54,7 @@ export async function createOrder(params: {
   notes?: string;
   items: OrderItemInput[];
   paymentMethod?: 'thai_qr' | 'credit_card' | 'bank_transfer';
+  paymentSlip: string;
 }) {
   const [shipAddr] = await db
     .select()
@@ -115,6 +116,8 @@ export async function createOrder(params: {
       shippingAddress: shippingData,
       billingAddress: billingData,
       notes: params.notes,
+      paymentMethod: params.paymentMethod || 'thai_qr',
+      paymentSlip: params.paymentSlip,
     })
     .returning();
 

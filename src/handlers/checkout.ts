@@ -34,6 +34,7 @@ handler.post('/', async (c) => {
     userAddressId?: number;
     address?: AddressInput;
     notes?: string;
+    paymentSlip: string;
   }>();
 
   if (!body.amountObject || !body.amountObject.total) {
@@ -60,6 +61,7 @@ handler.post('/', async (c) => {
     billingAddressId: addressId,
     notes: body.notes,
     items: body.items,
+    paymentSlip: body.paymentSlip,
   });
 
   return c.json({ data: order });
