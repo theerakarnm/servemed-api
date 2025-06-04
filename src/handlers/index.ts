@@ -4,4 +4,4 @@ export { default as compose } from './compose'
 export { default as images } from './images'
 export { default as recommendationsHandler } from './recommendations'
 export { default as checkoutHandler } from './checkout'
-
+export { default as configHandler } from './config'

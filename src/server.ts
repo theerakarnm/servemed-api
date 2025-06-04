@@ -22,6 +22,7 @@ app.route('/auth', handlers.auth)
 app.route('/v1/products', handlers.productsHandler)
 app.route('/v1/compose', handlers.compose)
 app.route('/v1/images', handlers.images)
+app.route('/v1/configs', handlers.configHandler)
 app.route('/v1/recommendations', handlers.recommendationsHandler)
 
 export default {
