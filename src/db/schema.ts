@@ -592,7 +592,7 @@ export const payments = pgTable(
     method: varchar("method", { length: 50 }), // e.g., 'stripe', 'paypal', 'credit_card'
     transactionId: varchar("transaction_id", { length: 255 }).unique(), // ID from payment provider
     amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    currency: varchar("currency", { length: 3 }).notNull().default("THB"),
     providerDetails: jsonb("provider_details"), // Store raw response or specific details from provider
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()

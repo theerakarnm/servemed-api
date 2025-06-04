@@ -150,6 +150,7 @@ export async function createOrder(params: {
     amount: order.totalAmount,
     currency: order.currency,
     method: order.paymentMethod || params.paymentMethod || 'thai_qr',
+    transactionId: `txn-${order.id}${Date.now()}`,
   });
 
   return order;
