@@ -501,8 +501,7 @@ export const orders = pgTable(
   {
     id: serial("id").primaryKey(),
     userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "restrict" }), // Don't delete user if they have orders
+      .notNull(),
     status: orderStatusEnum("status").default("pending").notNull(),
     paymentSlip: varchar("payment_slip", { length: 512 }), // Optional: For manual payment methods
     shipping: decimal("shipping_amount", { precision: 12, scale: 2 }).default('0').notNull(),

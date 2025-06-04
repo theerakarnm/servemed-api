@@ -28,6 +28,19 @@ export interface OrderItemInput {
 }
 
 export async function createAddress(userId: string | null, address: AddressInput) {
+  console.log({
+    userId: userId ?? null,
+    firstName: address.firstName,
+    lastName: address.lastName,
+    streetLine1: address.address,
+    streetLine2: null,
+    city: address.city,
+    stateOrProvince: address.state,
+    postalCode: address.postalCode,
+    phone: address.phone,
+    country: address.country,
+  });
+
   const [row] = await db
     .insert(addresses)
     .values({

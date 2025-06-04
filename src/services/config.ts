@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { checkouts, configTable } from '../db/schema';
+import { checkouts, configTable } from '../db/drizzle/schema';
 import { and, eq, isNull } from 'drizzle-orm';
 
 export async function createConfiguration(data: typeof configTable.$inferInsert) {

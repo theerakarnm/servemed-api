@@ -49,8 +49,14 @@ handler.post('/', async (c) => {
     if (!body.address) {
       throw new HTTPException(400, { message: 'Address is required' });
     }
+    console.log(body.address);
+
     const addr = await service.orderService.createAddress(user?.id ?? null, body.address);
     addressId = addr.id;
+  }
+
+  if (!addressId) {
+    throw new HTTPException(400, { message: 'Address creation failed' });
   }
 
   const order = await service.orderService.createOrder({
