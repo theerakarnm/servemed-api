@@ -23,10 +23,13 @@ export async function createAddress(userId: string, data: AddressInput) {
     .insert(addresses)
     .values({
       userId,
-      streetLine1: data.streetLine1,
-      streetLine2: data.streetLine2,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phone: data.phone,
+      streetLine1: data.address,
+      streetLine2: null,
       city: data.city,
-      stateOrProvince: data.stateOrProvince,
+      stateOrProvince: data.state,
       postalCode: data.postalCode,
       country: data.country,
     })
@@ -42,10 +45,13 @@ export async function updateAddress(
   const [row] = await db
     .update(addresses)
     .set({
-      streetLine1: data.streetLine1,
-      streetLine2: data.streetLine2,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phone: data.phone,
+      streetLine1: data.address,
+      streetLine2: null,
       city: data.city,
-      stateOrProvince: data.stateOrProvince,
+      stateOrProvince: data.state,
       postalCode: data.postalCode,
       country: data.country,
       updatedAt: new Date(),
